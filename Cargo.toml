@@ -1,0 +1,17 @@
+[package]
+authors    =["Thor Kampefner <thorck@pm.me>"]
+description="""prototype optimized gfmul in ghash"""
+edition    ="2021"
+name       ="aes-proof-gfmul-prototype"
+repository ="https://github.com/thor314/aes-proof-gfmul-prototype"
+version    ="0.1.0"
+
+[dependencies]
+anyhow   ="1.0"
+cute = "0.3.0"
+log       ="0.4" 
+
+
+[dev-dependencies]
+rstest    ="0.18"         # testing convenience proc-macros
+env_logger="0.11"
