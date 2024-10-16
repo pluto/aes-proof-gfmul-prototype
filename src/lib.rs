@@ -32,8 +32,8 @@ pub fn ghash(hashkey: &[u8; 16], blocks: &[&[u8; 16]]) -> [u8; 16] {
 /// binary vectors, and arithmetic operations are defined modulo the irreducible polynomial:
 /// $x^{128} + x^7 + x^2 + x + 1$.
 pub fn gfmul(a: &[u8; 16], b: &[u8; 16]) -> [u8; 16] {
-    let (al, ar) = parse_input(a);
-    let (bl, br) = parse_input(b);
+    let (al, ar) = parse_array_as_pair(a);
+    let (bl, br) = parse_array_as_pair(b);
 
     let rr = ar * br;
     let lr = (al * br) ^ (ar * bl);
@@ -61,14 +61,6 @@ fn remap(n: u128) -> u128 {
     v.into_iter().fold(0, |acc, i| acc << 1 | i as u128)
 }
 
-pub fn parse_input(input: &[u8; 16]) -> (u128, u128) {
-    let (l, r) = input.split_at(8);
-    let left = u64::from_be_bytes(l.try_into().unwrap()) as u128;
-    let right = u64::from_be_bytes(r.try_into().unwrap()) as u128;
-
-    (left, right)
-}
-
 // assume i < 128
 pub fn generate_galois_field_mapping(i: u8) -> Vec<u8> {
     assert!(i < 128);
@@ -85,3 +77,29 @@ pub fn generate_galois_field_mapping(i: u8) -> Vec<u8> {
     v.reverse();
     v
 }
+
+/// Note that these bytes are neither BE nor LE encoded.
+/// Leading bit is LSB; trailing bit is MSB.
+///
+/// Thus:
+///     1 = [ 1, 0, 0, 0, ... 0 ]
+/// 2^127 = [ 0, 0, 0, ... 0, 1 ]
+///
+/// if byte b = [1 0 0 0 0 0 0 0]
+///
+/// Return: (left parsed 64-bits, right parsed 64 bits)
+pub fn parse_array_as_pair(arr: &[u8; 16]) -> (u128, u128) {
+    let arr = (*arr).into_iter().map(reverse_byte).collect::<Vec<u8>>();
+    let (l, r) = arr.split_at(8);
+    let l = (0..8).fold(0, |acc, i| acc | (l[i] as u128) << (i * 8));
+    let r = (0..8).fold(0, |acc, i| acc | (r[i] as u128) << (i * 8));
+
+    (l, r)
+}
+
+/// interpret 128; i.e. 0x80 as [1000 0000]
+fn parse_u8_as_bits(b: u8) -> Vec<bool> { (0..8).map(|i| b >> i & 1 == 1).collect() }
+
+// /// send bits in byte to reverse order; e.g. send (192=128+64) -> 3
+// fn reverse_byte(b: u8) -> u8 { (0..8).fold(0, |acc, i| acc | (b & (128 >> i))) }
+fn reverse_byte(b: u8) -> u8 { (0..8).fold(0, |acc, i| acc | ((b >> (7 - i)) & 1) << i) }
