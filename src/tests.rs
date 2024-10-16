@@ -178,10 +178,37 @@ fn test_ghash_rtwo_msb() {
     assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(&RTWO, &[&RONE])));
 }
 
+// fail
 #[test]
-fn test_ghash_two_block() {
+fn test_ghash_h_x1() {
+    let mut ghash_rc = GHash::new(&H.into());
+    ghash_rc.update(&[X_1.into()]);
+    let result = ghash_rc.finalize();
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(&H, &[&X_1])));
+}
+
+// fail
+#[test]
+fn test_ghash_h_x2() {
+    let mut ghash_rc = GHash::new(&H.into());
+    ghash_rc.update(&[X_2.into()]);
+    let result = ghash_rc.finalize();
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(&H, &[&X_2])));
+}
+
+// fail
+#[test]
+fn test_ghash_two_block_1() {
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[X_1.into(), X_2.into()]);
     let result = ghash_rc.finalize();
     assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(&H, &[&X_1, &X_2])));
+}
+
+#[test]
+fn test_ghash_two_block_2() {
+    let mut ghash_rc = GHash::new(&RONE.into());
+    ghash_rc.update(&[RONE.into(), RTWO.into()]);
+    let result = ghash_rc.finalize();
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(&RONE, &[&RONE, &RTWO])));
 }
