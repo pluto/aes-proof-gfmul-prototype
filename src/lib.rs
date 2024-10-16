@@ -9,6 +9,19 @@
 use std::collections::HashMap;
 #[cfg(test)] mod tests;
 
+pub fn ghash(hashkey: &[u8; 16], blocks: &[&[u8; 16]]) -> [u8; 16] {
+    let mut x = [0u8; 16];
+
+    for block in blocks {
+        for i in 0..16 {
+            x[i] ^= block[i];
+        }
+        x = gfmul(&x, hashkey);
+    }
+
+    x
+}
+
 /// Multiplication over the finite field $\text{GF}(2^{128})$. Elements in this field are 128-bit
 /// binary vectors, and arithmetic operations are defined modulo the irreducible polynomial:
 /// $x^{128} + x^7 + x^2 + x + 1$.
@@ -30,7 +43,6 @@ pub fn gfmul(a: &[u8; 16], b: &[u8; 16]) -> [u8; 16] {
 /// Each bit of the argument $n$ is an overflow bit of the Galois field polynomial.
 /// Compute x^{128} * n (mod x^{128} + x^7 + x^2 + x + 1)
 fn remap(n: u128) -> u128 {
-    // let mapping = generate_galois_field_mapping();
     let mut v = vec![0; 128];
     (0..=126).for_each(|i| {
         if n & (1 << i) == 1 {

@@ -9,6 +9,9 @@ version    ="0.1.0"
 [dependencies]
 anyhow   ="1.0"
 cute = "0.3.0"
+ghash = "0.5.1"
+hex = "0.4.3"
+hex-literal = "0.4.1"
 log       ="0.4" 
 
 
