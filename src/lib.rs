@@ -44,14 +44,14 @@ pub fn gfmul(a: &[u8; 16], b: &[u8; 16]) -> [u8; 16] {
     let (upper, lower) = (ll ^ (lr >> 64), rr ^ (lr << 64));
     // dbg!(upper, lower);
 
-    // (lower ^ remap(upper)).to_be_bytes()
-    parse_u128_as_array(lower)
+    // parse_u128_as_array(lower)
+    parse_u128_as_array(lower ^ remap(upper))
 }
 
 /// Each bit of the argument $n$ is an overflow bit of the Galois field polynomial.
 /// Compute x^{128} * n (mod x^{128} + x^7 + x^2 + x + 1)
 fn remap(n: u128) -> u128 {
-    let mut v = vec![0; 128];
+    let mut v = [0; 128];
     (0..=126).for_each(|i| {
         if n & (1 << i) == 1 {
             let m = generate_galois_field_mapping(i);
@@ -63,20 +63,24 @@ fn remap(n: u128) -> u128 {
     v.into_iter().fold(0, |acc, i| acc << 1 | i as u128)
 }
 
-// assume i < 128
-pub fn generate_galois_field_mapping(i: u8) -> Vec<u8> {
-    assert!(i < 128);
-    let mut v: Vec<u8> = vec![0; 128];
+/// Computes galois polynomial (x^n)(x^7 + x^2 + x + 1) for 0 <= i < 128.
+///
+/// e.g.
+/// n=0: [1, 1, 1, 0, 0, 0, 0, 1, 0...]
+/// n=1: [0, 1, 1, 1, 0, 0, 0, 0, 1, 0...]
+pub fn generate_galois_field_mapping(n: u8) -> [u8; 128] {
+    assert!(n < 128);
+    let mut v = [0; 128];
+
     for j in [0, 1, 2, 7] {
-        if i + j < 128 {
-            v[(i + j) as usize] ^= 1;
+        if n + j < 128 {
+            v[(n + j) as usize] ^= 1;
         } else {
             for k in [0, 1, 2, 7] {
-                v[(i + j + k - 128) as usize] ^= 1;
+                v[(n + j + k - 128) as usize] ^= 1;
             }
         }
     }
-    v.reverse();
     v
 }
 

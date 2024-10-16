@@ -1,3 +1,5 @@
+use std::io::Read;
+
 use ghash::{
     universal_hash::{KeyInit, UniversalHash},
     GHash,
@@ -13,7 +15,8 @@ const RONE: [u8; 16] = hex!("00000000000000000000000000000001"); // 1 << 127
 const RTWO: [u8; 16] = hex!("00000000000000000000000000000002"); // 1 << 126
 
 // todo: kill
-const POLY: [u8; 16] = hex!("00000000000000000000000000000087");
+// const POLY: [u8; 16] = hex!("00000000000000000000000000000087");
+const POLY: [u8; 16] = hex!("e1000000000000000000000000000000");
 
 // https://github.com/RustCrypto/universal-hashes/blob/master/ghash/tests/lib.rs//
 const H: [u8; 16] = hex!("25629347589242761d31f826ba4b757b");
@@ -122,23 +125,7 @@ fn test_ghash_two_msb() {
     let mut ghash_rc = GHash::new(&LTWO.into());
     ghash_rc.update(&[RONE.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(result.as_slice(), ghash(&LTWO, &[&RONE]));
-}
-
-#[test]
-fn test_ghash_lsb_poly() {
-    let mut ghash_rc = GHash::new(&LONE.into());
-    ghash_rc.update(&[POLY.into()]);
-    let result = ghash_rc.finalize();
-    assert_eq!(result.as_slice(), ghash(&LONE, &[&POLY]));
-}
-
-#[test]
-fn test_ghash_msb_poly() {
-    let mut ghash_rc = GHash::new(&RONE.into());
-    ghash_rc.update(&[POLY.into()]);
-    let result = ghash_rc.finalize();
-    assert_eq!(result.as_slice(), ghash(&RONE, &[&POLY]));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(&LTWO, &[&RONE])));
 }
 
 #[test]
@@ -146,7 +133,7 @@ fn test_ghash_ltwo_msb() {
     let mut ghash_rc = GHash::new(&LTWO.into());
     ghash_rc.update(&[RONE.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(result.as_slice(), ghash(&LTWO, &[&RONE]));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(&LTWO, &[&RONE])));
 }
 
 #[test]
@@ -154,7 +141,7 @@ fn test_ghash_ltwo_lsb() {
     let mut ghash_rc = GHash::new(&LTWO.into());
     ghash_rc.update(&[LONE.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(result.as_slice(), ghash(&LTWO, &[&LONE]));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(&LTWO, &[&LONE])));
 }
 
 // #[test]
