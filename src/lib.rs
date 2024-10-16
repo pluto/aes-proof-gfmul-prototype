@@ -45,30 +45,54 @@ pub fn gfmul(a: &[u8; 16], b: &[u8; 16]) -> [u8; 16] {
     // dbg!(upper, lower);
 
     // parse_u128_as_array(lower)
-    parse_u128_as_array(lower ^ remap(upper))
+    parse_u128_as_array(lower ^ galois_reduce(upper))
 }
 
-/// Each bit of the argument $n$ is an overflow bit of the Galois field polynomial.
-/// Compute x^{128} * n (mod x^{128} + x^7 + x^2 + x + 1)
-fn remap(n: u128) -> u128 {
-    let mut v = [0; 128];
+/// Compute x^{128} * POLY_n (mod x^{128} + 1 + x + x^2 + x^7)
+///
+/// where POLY_n encodes a Galois polynomial according to the GHash convention.
+///
+/// e.g.
+/// n=1>>0: x^128 * x^0 = 1   + x   + x^2 + x^7 ; return 135
+/// n=1>>1: x^128 * x^1 = x   + x^2 + x^3 + x^8 ; return 270
+/// n=1>>2: x^128 * x^2 = x^2 + x^3 + x^4 + x^9 ; return 540
+fn galois_reduce(n: u128) -> u128 {
+    // let mut v = [0; 128];
+    let mut m = 0u128;
+
+    // 126: since the product x^127 * x^127 is at most 254
+    // therefore there is no element of degree greater than 126=254-126
+    println!("n={n}");
     (0..=126).for_each(|i| {
-        if n & (1 << i) == 1 {
-            let m = generate_galois_field_mapping(i);
-            v.iter_mut().zip(m.into_iter()).for_each(|(vj, mj)| *vj ^= mj);
+        println!("n&(1<<{i})={}", n & (1 << i));
+        if n & (1 << i) != 0 {
+            m ^= galois_product_int(i);
+            // dbg!(i, galois_product_int(i), m);
+            // v.iter_mut().zip(m.into_iter()).for_each(|(vj, mj)| *vj ^= mj);
         }
     });
 
     // BE accumululate v
-    v.into_iter().fold(0, |acc, i| acc << 1 | i as u128)
+    // v.into_iter().fold(0, |acc, i| acc << 1 | i as u128)
+    // 0
+    m
 }
 
-/// Computes galois polynomial (x^n)(x^7 + x^2 + x + 1) for 0 <= i < 128.
+/// Computes galois polynomial product (x^n)(x^7 + x^2 + x + 1) encoded as u128
+///
+/// n=0: [1, 1, 1, 0, 0, 0, 0, 1, 0...] => 135
+/// n=1: [0, 1, 1, 1, 0, 0, 0, 0, 1, 0...] => 270
+fn galois_product_int(n: u8) -> u128 {
+    galois_product(n).into_iter().rev().fold(0, |acc, i| (acc << 1) | (i as u128))
+}
+
+/// Computes galois polynomial product (x^n)(x^7 + x^2 + x + 1)
+/// returns an array with leading LSB.
 ///
 /// e.g.
 /// n=0: [1, 1, 1, 0, 0, 0, 0, 1, 0...]
 /// n=1: [0, 1, 1, 1, 0, 0, 0, 0, 1, 0...]
-pub fn generate_galois_field_mapping(n: u8) -> [u8; 128] {
+fn galois_product(n: u8) -> [u8; 128] {
     assert!(n < 128);
     let mut v = [0; 128];
 

@@ -15,8 +15,8 @@ const RONE: [u8; 16] = hex!("00000000000000000000000000000001"); // 1 << 127
 const RTWO: [u8; 16] = hex!("00000000000000000000000000000002"); // 1 << 126
 
 // todo: kill
-// const POLY: [u8; 16] = hex!("00000000000000000000000000000087");
-const POLY: [u8; 16] = hex!("e1000000000000000000000000000000");
+// const POLY: [u8; 16] = hex!("00000000000000000000000000000087"); // 135 backwards
+const POLY: [u8; 16] = hex!("e1000000000000000000000000000000"); // 135
 
 // https://github.com/RustCrypto/universal-hashes/blob/master/ghash/tests/lib.rs//
 const H: [u8; 16] = hex!("25629347589242761d31f826ba4b757b");
@@ -58,16 +58,29 @@ fn test_parse() {
 }
 
 #[test]
-fn test_galois_field_mapping() {
+fn test_galois_reduce() {
+    assert_eq!(galois_reduce(0), 0);
+    assert_eq!(galois_reduce(1), 135);
+    assert_eq!(galois_reduce(2), 270);
+    assert_eq!(galois_reduce(3), 135 ^ 270);
+    assert_eq!(galois_reduce(4), 540);
+}
+
+#[test]
+fn test_galois_product() {
     let mut v = vec![0; 128];
     [0, 1, 2, 7].into_iter().for_each(|i| v[i] = 1);
-    assert_eq!(generate_galois_field_mapping(0).to_vec(), v);
+    assert_eq!(galois_product(0).to_vec(), v);
     let mut v = vec![0; 128];
     [120, 121, 122, 127].into_iter().for_each(|i| v[i] = 1);
-    assert_eq!(generate_galois_field_mapping(120).to_vec(), v);
+    assert_eq!(galois_product(120).to_vec(), v);
     let mut v = vec![0; 128];
     [0, 1, 2, 7, 121, 122, 123].into_iter().for_each(|i| v[i] = 1);
-    assert_eq!(generate_galois_field_mapping(121).to_vec(), v);
+    assert_eq!(galois_product(121).to_vec(), v);
+
+    assert_eq!(galois_product_int(0), 135);
+    assert_eq!(galois_product_int(1), 270);
+    assert_eq!(galois_product_int(2), 540);
 }
 
 // reference rust-crypto snippet: https://github.com/RustCrypto/universal-hashes/blob/master/ghash/tests/lib.rs
