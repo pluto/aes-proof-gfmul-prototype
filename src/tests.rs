@@ -170,10 +170,18 @@ fn test_ghash_ltwo_lsb() {
     assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(&LTWO, &[&LONE])));
 }
 
-// #[test]
+#[test]
+fn test_ghash_rtwo_msb() {
+    let mut ghash_rc = GHash::new(&RTWO.into());
+    ghash_rc.update(&[RONE.into()]);
+    let result = ghash_rc.finalize();
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(&RTWO, &[&RONE])));
+}
+
+#[test]
 fn test_ghash_two_block() {
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[X_1.into(), X_2.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(result.as_slice(), ghash(&H, &[&X_1, &X_2]));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(&H, &[&X_1, &X_2])));
 }

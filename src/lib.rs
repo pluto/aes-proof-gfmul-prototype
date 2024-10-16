@@ -10,8 +10,6 @@
 
 pub fn ghash(hashkey: &[u8; 16], blocks: &[&[u8; 16]]) -> [u8; 16] {
     let mut x = [0u8; 16];
-    // let hashkey = reverse_bits(hashkey);
-    // let blocks = blocks.into_iter().map(|b| reverse_bits(b)).collect::<Vec<_>>();
 
     for block in blocks {
         for i in 0..16 {
@@ -23,18 +21,12 @@ pub fn ghash(hashkey: &[u8; 16], blocks: &[&[u8; 16]]) -> [u8; 16] {
     x
 }
 
-// pub fn u8_reverse_bits(n: u8) -> u8 {
-// aa
-// aaaaa
-// }
-
 /// Multiplication over the finite field $\text{GF}(2^{128})$. Elements in this field are 128-bit
 /// binary vectors, and arithmetic operations are defined modulo the irreducible polynomial:
 /// $x^{128} + x^7 + x^2 + x + 1$.
 pub fn gfmul(a: &[u8; 16], b: &[u8; 16]) -> [u8; 16] {
     let (al, ar) = parse_array_as_pair(a);
     let (bl, br) = parse_array_as_pair(b);
-    // dbg!(al, ar, bl, br);
 
     let rr = ar * br;
     let lr = (al * br) ^ (ar * bl);
@@ -42,7 +34,6 @@ pub fn gfmul(a: &[u8; 16], b: &[u8; 16]) -> [u8; 16] {
 
     // upper 128..256 bits and lower 128 bits
     let (upper, lower) = (ll ^ (lr >> 64), rr ^ (lr << 64));
-    // dbg!(upper, lower);
 
     // parse_u128_as_array(lower)
     parse_u128_as_array(lower ^ galois_reduce(upper))
@@ -57,24 +48,16 @@ pub fn gfmul(a: &[u8; 16], b: &[u8; 16]) -> [u8; 16] {
 /// n=1>>1: x^128 * x^1 = x   + x^2 + x^3 + x^8 ; return 270
 /// n=1>>2: x^128 * x^2 = x^2 + x^3 + x^4 + x^9 ; return 540
 fn galois_reduce(n: u128) -> u128 {
-    // let mut v = [0; 128];
     let mut m = 0u128;
 
     // 126: since the product x^127 * x^127 is at most 254
     // therefore there is no element of degree greater than 126=254-126
-    println!("n={n}");
     (0..=126).for_each(|i| {
-        println!("n&(1<<{i})={}", n & (1 << i));
         if n & (1 << i) != 0 {
             m ^= galois_product_int(i);
-            // dbg!(i, galois_product_int(i), m);
-            // v.iter_mut().zip(m.into_iter()).for_each(|(vj, mj)| *vj ^= mj);
         }
     });
 
-    // BE accumululate v
-    // v.into_iter().fold(0, |acc, i| acc << 1 | i as u128)
-    // 0
     m
 }
 
@@ -141,5 +124,4 @@ fn parse_u128_as_array(n: u128) -> [u8; 16] {
         arr[i] = reverse_byte((n >> (i * 8)) as u8);
     }
     arr
-    // (0..16).map(|i| reverse_byte((n >> (i * 8)) as u8)).collect::<Vec<u8>>()
 }
