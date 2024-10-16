@@ -57,6 +57,19 @@ fn test_parse() {
     assert_eq!(parse_array_as_pair(&LTWO), (0, 2));
 }
 
+#[test]
+fn test_galois_field_mapping() {
+    let mut v = vec![0; 128];
+    [0, 1, 2, 7].into_iter().for_each(|i| v[i] = 1);
+    assert_eq!(generate_galois_field_mapping(0).to_vec(), v);
+    let mut v = vec![0; 128];
+    [120, 121, 122, 127].into_iter().for_each(|i| v[i] = 1);
+    assert_eq!(generate_galois_field_mapping(120).to_vec(), v);
+    let mut v = vec![0; 128];
+    [0, 1, 2, 7, 121, 122, 123].into_iter().for_each(|i| v[i] = 1);
+    assert_eq!(generate_galois_field_mapping(121).to_vec(), v);
+}
+
 // reference rust-crypto snippet: https://github.com/RustCrypto/universal-hashes/blob/master/ghash/tests/lib.rs
 fn ghash_helper(h: &[u8; 16], block: &[u8; 16]) {
     let mut ghash_rc = GHash::new(h.into());
