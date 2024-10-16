@@ -4,14 +4,13 @@ use ghash::{
 };
 use hex_literal::hex;
 
-type BlockSize = generic_array::typenum::U16;
 use super::*;
 
-const MSB: [u8; 16] = hex!("80000000000000000000000000000000");
-const LTWO: [u8; 16] = hex!("40000000000000000000000000000000");
-const LSB: [u8; 16] = hex!("00000000000000000000000000000001");
-const TWO: [u8; 16] = hex!("00000000000000000000000000000002");
-const POLY: [u8; 16] = hex!("00000000000000000000000000000087");
+const MSB: [u8; 16] = hex!("80000000000000000000000000000000"); // 1 << 127
+const LTWO: [u8; 16] = hex!("40000000000000000000000000000000"); // 2
+const LSB: [u8; 16] = hex!("00000000000000000000000000000001"); // 1
+const TWO: [u8; 16] = hex!("00000000000000000000000000000002"); // 1 << 126
+const POLY: [u8; 16] = hex!("00000000000000000000000000000087"); // todo: kill
 
 // https://github.com/RustCrypto/universal-hashes/blob/master/ghash/tests/lib.rs//
 const H: [u8; 16] = hex!("25629347589242761d31f826ba4b757b");
@@ -33,6 +32,29 @@ fn sanity_checks() {
     assert_eq!(gfmul(&MSB, &LSB), MSB);
 }
 
+// reference rust-crypto snippet: https://github.com/RustCrypto/universal-hashes/blob/master/ghash/tests/lib.rs
+fn ghash_helper(h: &[u8; 16], block: &[u8; 16]) {
+    let mut ghash_rc = GHash::new(h.into());
+
+    // 1: naive: need to specify type into casts to
+    //
+    // ghash_rc.update(&[*block.into()]); // type error
+    //
+    // note that into can infer type, calling the same method with a const value for block
+    // const MSB: [u8; 16] = hex!("80000000000000000000000000000000"); // 1 << 127
+    // ghash_rc.update(&[MSB.into()]); // works
+
+    // 2: mismatch version of GenericArray with ghash
+    //
+    // use generic_array::{typenum::U16, GenericArray};
+    // let block_array: GenericArray<u8, U16> = *GenericArray::from_slice(block); // Convert `block`
+    // explicitly ghash_rc.update(&[block_array]);
+
+    let result = ghash_rc.finalize();
+    assert_eq!(result.as_slice(), ghash(&H, &[&block]));
+}
+
+// because of generic array, it's hard to write a helper for this function
 #[test]
 fn overflow_check() {
     assert_eq!(gfmul(&MSB, &TWO), POLY);
