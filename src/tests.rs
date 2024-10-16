@@ -29,6 +29,15 @@ fn test_reverse_byte() {
 }
 
 #[test]
+fn test_parse_u128_as_array() {
+    assert_eq!(parse_u128_as_array(0), [0; 16]);
+    assert_eq!(parse_u128_as_array(1), hex!("80000000000000000000000000000000"));
+    assert_eq!(parse_u128_as_array(3), hex!("c0000000000000000000000000000000"));
+    assert_eq!(parse_u128_as_array(128), hex!("01000000000000000000000000000000"));
+    assert_eq!(parse_u128_as_array(256), hex!("00800000000000000000000000000000"));
+}
+
+#[test]
 fn test_parse_u8_as_bits() {
     assert_eq!(parse_u8_as_bits(0), [false, false, false, false, false, false, false, false]);
     assert_eq!(parse_u8_as_bits(1), [true, false, false, false, false, false, false, false]);
@@ -39,10 +48,10 @@ fn test_parse_u8_as_bits() {
 
 #[test]
 fn test_parse() {
-    assert_eq!(parse_array_as_pair(&RONE), (0, 1 << 63));
-    assert_eq!(parse_array_as_pair(&LONE), (1, 0));
-    assert_eq!(parse_array_as_pair(&RTWO), (0, 1 << 62));
-    assert_eq!(parse_array_as_pair(&LTWO), (2, 0));
+    assert_eq!(parse_array_as_pair(&RONE), (1 << 63, 0));
+    assert_eq!(parse_array_as_pair(&LONE), (0, 1));
+    assert_eq!(parse_array_as_pair(&RTWO), (1 << 62, 0));
+    assert_eq!(parse_array_as_pair(&LTWO), (0, 2));
 }
 
 // reference rust-crypto snippet: https://github.com/RustCrypto/universal-hashes/blob/master/ghash/tests/lib.rs
@@ -101,7 +110,7 @@ fn test_ghash_lsb_msb() {
 }
 
 #[test]
-fn test_ghash_two_lsb() {
+fn test_ghash_lsb_two() {
     let mut ghash_rc = GHash::new(&LTWO.into());
     ghash_rc.update(&[LONE.into()]);
     let result = ghash_rc.finalize();
