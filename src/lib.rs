@@ -6,21 +6,27 @@
 #![allow(clippy::clone_on_copy)]
 #![allow(unused_mut)]
 
-use std::collections::HashMap;
 #[cfg(test)] mod tests;
 
 pub fn ghash(hashkey: &[u8; 16], blocks: &[&[u8; 16]]) -> [u8; 16] {
     let mut x = [0u8; 16];
+    // let hashkey = reverse_bits(hashkey);
+    // let blocks = blocks.into_iter().map(|b| reverse_bits(b)).collect::<Vec<_>>();
 
     for block in blocks {
         for i in 0..16 {
             x[i] ^= block[i];
         }
-        x = gfmul(&x, hashkey);
+        x = gfmul(&x, &hashkey);
     }
 
     x
 }
+
+// pub fn u8_reverse_bits(n: u8) -> u8 {
+// aa
+// aaaaa
+// }
 
 /// Multiplication over the finite field $\text{GF}(2^{128})$. Elements in this field are 128-bit
 /// binary vectors, and arithmetic operations are defined modulo the irreducible polynomial:

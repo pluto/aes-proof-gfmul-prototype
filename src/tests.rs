@@ -4,9 +4,11 @@ use ghash::{
 };
 use hex_literal::hex;
 
+type BlockSize = generic_array::typenum::U16;
 use super::*;
 
 const MSB: [u8; 16] = hex!("80000000000000000000000000000000");
+const LTWO: [u8; 16] = hex!("40000000000000000000000000000000");
 const LSB: [u8; 16] = hex!("00000000000000000000000000000001");
 const TWO: [u8; 16] = hex!("00000000000000000000000000000002");
 const POLY: [u8; 16] = hex!("00000000000000000000000000000087");
@@ -37,16 +39,83 @@ fn overflow_check() {
 }
 
 #[test]
-fn test_ghash_one_block() {
-    let mut ghash_rc = GHash::new(&H.into());
-    ghash_rc.update(&[X_1.into()]);
+fn test_ghash_lsb_lsb() {
+    let mut ghash_rc = GHash::new(&LSB.into());
+    ghash_rc.update(&[LSB.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(result.as_slice(), ghash(&H, &[&X_1]));
+    assert_eq!(result.as_slice(), ghash(&LSB, &[&LSB]));
+}
 
-    let mut ghash_rc = GHash::new(&H.into());
-    ghash_rc.update(&[X_2.into()]);
+#[test]
+fn test_ghash_msb_msb() {
+    let mut ghash_rc = GHash::new(&MSB.into());
+    ghash_rc.update(&[MSB.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(result.as_slice(), ghash(&H, &[&X_2]));
+    assert_eq!(result.as_slice(), ghash(&MSB, &[&MSB]));
+}
+
+#[test]
+fn test_ghash_two_two() {
+    let mut ghash_rc = GHash::new(&TWO.into());
+    ghash_rc.update(&[TWO.into()]);
+    let result = ghash_rc.finalize();
+    assert_eq!(result.as_slice(), ghash(&TWO, &[&TWO]));
+}
+
+#[test]
+fn test_ghash_lsb_msb() {
+    let mut ghash_rc = GHash::new(&LSB.into());
+    ghash_rc.update(&[MSB.into()]);
+    let result = ghash_rc.finalize();
+    assert_eq!(result.as_slice(), ghash(&LSB, &[&MSB]));
+}
+
+#[test]
+fn test_ghash_two_lsb() {
+    let mut ghash_rc = GHash::new(&TWO.into());
+    ghash_rc.update(&[LSB.into()]);
+    let result = ghash_rc.finalize();
+    assert_eq!(result.as_slice(), ghash(&TWO, &[&LSB]));
+}
+
+#[test]
+fn test_ghash_two_msb() {
+    let mut ghash_rc = GHash::new(&TWO.into());
+    ghash_rc.update(&[MSB.into()]);
+    let result = ghash_rc.finalize();
+    assert_eq!(result.as_slice(), ghash(&TWO, &[&MSB]));
+}
+
+#[test]
+fn test_ghash_lsb_poly() {
+    let mut ghash_rc = GHash::new(&LSB.into());
+    ghash_rc.update(&[POLY.into()]);
+    let result = ghash_rc.finalize();
+    assert_eq!(result.as_slice(), ghash(&LSB, &[&POLY]));
+}
+
+#[test]
+fn test_ghash_msb_poly() {
+    let mut ghash_rc = GHash::new(&MSB.into());
+    ghash_rc.update(&[POLY.into()]);
+    let result = ghash_rc.finalize();
+    assert_eq!(result.as_slice(), ghash(&MSB, &[&POLY]));
+}
+
+#[test]
+fn test_ghash_ltwo_msb() {
+    let mut ghash_rc = GHash::new(&LTWO.into());
+    ghash_rc.update(&[MSB.into()]);
+    let result = ghash_rc.finalize();
+    assert_eq!(result.as_slice(), ghash(&LTWO, &[&MSB]));
+}
+
+#[test]
+fn test_ghash_ltwo_lsb() {
+    let mut ghash_rc = GHash::new(&LTWO.into());
+    ghash_rc.update(&[LSB.into()]);
+    let result = ghash_rc.finalize();
+    assert_eq!(result.as_slice(), ghash(&LTWO, &[&LSB]));
 }
 
 // #[test]
