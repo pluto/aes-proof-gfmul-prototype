@@ -27,6 +27,7 @@ pub fn ghash(hashkey: [u8; 16], blocks: &[&[u8; 16]]) -> [u8; 16] {
 pub fn gfmul(a: [u8; 16], b: [u8; 16]) -> [u8; 16] {
     let (al, ar) = parse_array_as_pair(a);
     let (bl, br) = parse_array_as_pair(b);
+    println!("al: {:?}, ar: {:?}, bl: {:?}, br: {:?}", al, ar, bl, br);
 
     // bits 0..128
     let rr = ar * br;
@@ -34,9 +35,11 @@ pub fn gfmul(a: [u8; 16], b: [u8; 16]) -> [u8; 16] {
     let lr = (al * br) ^ (ar * bl);
     // bits 128..256
     let ll = al * bl;
+    println!("ll: {:?}, rr: {:?}, lr: {:?}, rl: {:?}", ll, rr, al * br, ar * bl);
 
     // sieve to upper 128..256 bits and lower 128 bits
     let (upper, lower) = (ll ^ (lr >> 64), rr ^ (lr << 64));
+    println!("upper: {:?}, lower: {:?}", upper, lower);
 
     // reduce the upper 128 bits back into the field
     parse_u128_as_array(lower ^ galois_reduce(upper))
@@ -58,11 +61,14 @@ fn galois_reduce(n: u128) -> u128 {
 
     // 126: since the product x^127 * x^127 is at most 254
     // therefore there is no element of degree greater than 126=254-126
-    (0..=126).for_each(|i| {
+    (0..=127).for_each(|i| {
         if n & (1 << i) != 0 {
+            println!("{n} ^ (1 << {i}) = {}", n ^ (1 << i));
+            println!("gal_product_int({i})={}", galois_product_int(i));
             m ^= galois_product_int(i);
         }
     });
+    println!("galois_reduced: {m}");
 
     m
 }

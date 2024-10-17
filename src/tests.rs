@@ -18,6 +18,8 @@ const RTWO: [u8; 16] = hex!("00000000000000000000000000000002"); // 1 << 126
 // const POLY: [u8; 16] = hex!("00000000000000000000000000000087"); // 135 backwards
 const POLY: [u8; 16] = hex!("e1000000000000000000000000000000"); // 135
 
+const H_: [u8; 16] = hex!("0000000000000000000000000000000b");
+
 // https://github.com/RustCrypto/universal-hashes/blob/master/ghash/tests/lib.rs//
 const H: [u8; 16] = hex!("25629347589242761d31f826ba4b757b");
 const X_1: [u8; 16] = hex!("4f4f95668c83dfb6401762bb2d01a262");
@@ -237,14 +239,13 @@ fn test_ghash_h_r_8() {
 
 /// ---
 #[test]
-fn reduce_complex() {
-    let (l, r) = parse_array_as_pair(X_1);
-    // l = 5063594870342871042 in binary:
-    // 0b100011001000101100000001011010011011101010001101110100000000010
-    // r = 7925140387208491762 in binary:
-    // 0b110110111111011110000010011000101100110101010011111001011110010
-    assert_eq!(galois_reduce(l), 0);
-    assert_eq!(galois_reduce(r), 0);
+fn test_ghash_h__r_300() {
+    const H_: [u8; 16] = hex!("30000000000000000000000000000000");
+    const R: [u8; 16] = hex!("00000000000000000000000000000030");
+    let mut ghash_rc = GHash::new(&H_.into());
+    ghash_rc.update(&[R.into()]);
+    let result = ghash_rc.finalize();
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H_, &[&R])));
 }
 
 #[test]
