@@ -38,11 +38,15 @@ pub fn gfmul(a: [u8; 16], b: [u8; 16]) -> [u8; 16] {
     println!("ll: {:?}, rr: {:?}, lr: {:?}, rl: {:?}", ll, rr, al * br, ar * bl);
 
     // sieve to upper 128..256 bits and lower 128 bits
-    let (upper, lower) = (ll ^ (lr >> 64), rr ^ (lr << 64));
+    let (lr_hi, lr_lo) = (lr >> 64, (lr & 2u128.pow(65) - 1) >> 1);
+    println!("lr_hi: {:?}, lr_lo: {:?}", lr_hi, lr_lo);
+    let (upper, lower) = (ll ^ lr_hi, rr ^ (lr_lo << 64));
     println!("upper: {:?}, lower: {:?}", upper, lower);
 
     // reduce the upper 128 bits back into the field
-    parse_u128_as_array(lower ^ galois_reduce(upper))
+    println!("galois_reduce(upper): {:?}", galois_reduce(upper));
+    // parse_u128_as_array(lower ^ galois_reduce(upper))
+    parse_u128_as_array(lower)
 }
 
 /// Compute x^{128} * POLY_n (mod x^{128} + 1 + x + x^2 + x^7)
@@ -138,10 +142,14 @@ fn parse_u8_as_bits(b: u8) -> Vec<bool> { (0..8).map(|i| b >> i & 1 == 1).collec
 fn reverse_byte(b: u8) -> u8 { (0..8).fold(0, |acc, i| acc | ((b >> (7 - i)) & 1) << i) }
 
 /// parse u128 into ghash custom reversed-byte array
+/// e.g.
+/// 1 << 127 -> [ 0x80 0x00...]
+/// 1        -> [ 0x00... 0x01]
 fn parse_u128_as_array(n: u128) -> [u8; 16] {
     let mut arr = [0; 16];
     for i in 0..16 {
         arr[i] = reverse_byte((n >> (i * 8)) as u8);
+        // println!("{i}th byte of {n}: {}", arr[i]);
     }
     arr
 }

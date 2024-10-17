@@ -40,6 +40,11 @@ fn test_parse_u128_as_array() {
     assert_eq!(parse_u128_as_array(3), hex!("c0000000000000000000000000000000"));
     assert_eq!(parse_u128_as_array(128), hex!("01000000000000000000000000000000"));
     assert_eq!(parse_u128_as_array(256), hex!("00800000000000000000000000000000"));
+    assert_eq!(parse_u128_as_array(1 << 127), hex!("00000000000000000000000000000001"));
+    assert_eq!(
+        parse_u128_as_array((1u128 << 127) + (1u128 << 126) + (1u128 << 125)),
+        hex!("00000000000000000000000000000007")
+    );
 }
 
 #[test]
