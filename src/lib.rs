@@ -44,9 +44,12 @@ pub fn gfmul(a: &[u8; 16], b: &[u8; 16]) -> [u8; 16] {
 /// where POLY_n encodes a Galois polynomial according to the GHash convention.
 ///
 /// e.g.
-/// n=1>>0: x^128 * x^0 = 1   + x   + x^2 + x^7 ; return 135
-/// n=1>>1: x^128 * x^1 = x   + x^2 + x^3 + x^8 ; return 270
-/// n=1>>2: x^128 * x^2 = x^2 + x^3 + x^4 + x^9 ; return 540
+/// n=1   : x^128 * x^0 = 1   + x   + x^2 + x^7 ; return 135
+/// n=2   : x^128 * x^1 = x   + x^2 + x^3 + x^8 ; return 270
+/// n=3   : f(1) ^ f(2)                         ; return 270 ^ 135
+/// n=4   : x^128 * x^2 = x^2 + x^3 + x^4 + x^9 ; return 540
+/// 1<<120: x^128*x^120 = x^120+x^121+x^122+x^127
+/// 1<<121: x^128*x^121 = x^121+x^122+x^123+(x^0+x^1+x^2+x^7)
 fn galois_reduce(n: u128) -> u128 {
     let mut m = 0u128;
 
@@ -63,8 +66,9 @@ fn galois_reduce(n: u128) -> u128 {
 
 /// Computes galois polynomial product (x^n)(x^7 + x^2 + x + 1) encoded as u128
 ///
-/// n=0: [1, 1, 1, 0, 0, 0, 0, 1, 0...] => 135
-/// n=1: [0, 1, 1, 1, 0, 0, 0, 0, 1, 0...] => 270
+/// n=0  : [1, 1, 1, 0, 0, 0, 0, 1, 0...] => 135
+/// n=1  : [0, 1, 1, 1, 0, 0, 0, 0, 1, 0...] => 270
+/// n=121: (121, 122, 123, (128=>0,1,2,7)) sum of 2 to each of these values
 fn galois_product_int(n: u8) -> u128 {
     galois_product(n).into_iter().rev().fold(0, |acc, i| (acc << 1) | (i as u128))
 }
