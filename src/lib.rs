@@ -8,14 +8,14 @@
 
 #[cfg(test)] mod tests;
 
-pub fn ghash(hashkey: &[u8; 16], blocks: &[&[u8; 16]]) -> [u8; 16] {
+pub fn ghash(hashkey: [u8; 16], blocks: &[&[u8; 16]]) -> [u8; 16] {
     let mut x = [0u8; 16];
 
     for block in blocks {
         for i in 0..16 {
             x[i] ^= block[i];
         }
-        x = gfmul(&x, &hashkey);
+        x = gfmul(x, hashkey);
     }
 
     x
@@ -24,18 +24,21 @@ pub fn ghash(hashkey: &[u8; 16], blocks: &[&[u8; 16]]) -> [u8; 16] {
 /// Multiplication over the finite field $\text{GF}(2^{128})$. Elements in this field are 128-bit
 /// binary vectors, and arithmetic operations are defined modulo the irreducible polynomial:
 /// $x^{128} + x^7 + x^2 + x + 1$.
-pub fn gfmul(a: &[u8; 16], b: &[u8; 16]) -> [u8; 16] {
+pub fn gfmul(a: [u8; 16], b: [u8; 16]) -> [u8; 16] {
     let (al, ar) = parse_array_as_pair(a);
     let (bl, br) = parse_array_as_pair(b);
 
+    // bits 0..128
     let rr = ar * br;
+    // bits 64..192
     let lr = (al * br) ^ (ar * bl);
+    // bits 128..256
     let ll = al * bl;
 
-    // upper 128..256 bits and lower 128 bits
+    // sieve to upper 128..256 bits and lower 128 bits
     let (upper, lower) = (ll ^ (lr >> 64), rr ^ (lr << 64));
 
-    // parse_u128_as_array(lower)
+    // reduce the upper 128 bits back into the field
     parse_u128_as_array(lower ^ galois_reduce(upper))
 }
 
@@ -105,14 +108,21 @@ fn galois_product(n: u8) -> [u8; 128] {
 /// if byte b = [1 0 0 0 0 0 0 0]
 ///
 /// Return: (MSB right parsed 64-bits, LSB left parsed 64 bits))
-fn parse_array_as_pair(arr: &[u8; 16]) -> (u128, u128) {
+fn parse_array_as_pair(arr: [u8; 16]) -> (u128, u128) {
     // ghash uses reversed internal byte-order
-    let arr = (*arr).into_iter().map(reverse_byte).collect::<Vec<u8>>();
+    let arr = (arr).into_iter().map(reverse_byte).collect::<Vec<u8>>();
     let (lower, upper) = arr.split_at(8);
     let lower = (0..8).fold(0, |acc, i| acc | (lower[i] as u128) << (i * 8));
     let upper = (0..8).fold(0, |acc, i| acc | (upper[i] as u128) << (i * 8));
 
     (upper, lower)
+}
+
+/// parse ghash-convention byte array to uint
+fn parse_array_as_uint(arr: [u8; 16]) -> u128 {
+    // ghash uses reversed internal byte-order
+    let arr = (arr).into_iter().map(reverse_byte).collect::<Vec<u8>>();
+    (0..16).fold(0, |acc, i| acc | (arr[i] as u128) << (i * 8))
 }
 
 /// interpret 128; i.e. 0x80 as [1000 0000]
