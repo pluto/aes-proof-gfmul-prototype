@@ -140,7 +140,7 @@ fn ghash_helper(h: &[u8; 16], block: &[u8; 16]) {
     // explicitly ghash_rc.update(&[block_array]);
 
     let result = ghash_rc.finalize();
-    assert_eq!(result.as_slice(), ghash(H, &[&block]));
+    assert_eq!(result.as_slice(), ghash(H, &[*block]));
 }
 
 #[test]
@@ -148,7 +148,7 @@ fn test_ghash_lsb_lsb() {
     let mut ghash_rc = GHash::new(&LONE.into());
     ghash_rc.update(&[LONE.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(result.as_slice(), ghash(LONE, &[&LONE]));
+    assert_eq!(result.as_slice(), ghash(LONE, &[LONE]));
 }
 
 #[test]
@@ -156,7 +156,7 @@ fn test_ghash_msb_msb() {
     let mut ghash_rc = GHash::new(&RONE.into());
     ghash_rc.update(&[RONE.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(RONE, &[&RONE])));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(RONE, &[RONE])));
 }
 
 #[test]
@@ -164,7 +164,7 @@ fn test_ghash_ltwo_ltwo() {
     let mut ghash_rc = GHash::new(&LTWO.into());
     ghash_rc.update(&[LTWO.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(result.as_slice(), ghash(LTWO, &[&LTWO]));
+    assert_eq!(result.as_slice(), ghash(LTWO, &[LTWO]));
 }
 
 #[test]
@@ -172,7 +172,7 @@ fn test_ghash_lsb_msb() {
     let mut ghash_rc = GHash::new(&LONE.into());
     ghash_rc.update(&[RONE.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(result.as_slice(), ghash(LONE, &[&RONE]));
+    assert_eq!(result.as_slice(), ghash(LONE, &[RONE]));
 }
 
 #[test]
@@ -180,7 +180,7 @@ fn test_ghash_lsb_ltwo() {
     let mut ghash_rc = GHash::new(&LTWO.into());
     ghash_rc.update(&[LONE.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(result.as_slice(), ghash(LTWO, &[&LONE]));
+    assert_eq!(result.as_slice(), ghash(LTWO, &[LONE]));
 }
 
 #[test]
@@ -188,7 +188,7 @@ fn test_ghash_ltwo_msb() {
     let mut ghash_rc = GHash::new(&LTWO.into());
     ghash_rc.update(&[RONE.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(LTWO, &[&RONE])));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(LTWO, &[RONE])));
 }
 
 #[test]
@@ -196,7 +196,7 @@ fn test_ghash_ltwo_lsb() {
     let mut ghash_rc = GHash::new(&LTWO.into());
     ghash_rc.update(&[LONE.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(LTWO, &[&LONE])));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(LTWO, &[LONE])));
 }
 
 #[test]
@@ -204,7 +204,7 @@ fn test_ghash_rtwo_msb() {
     let mut ghash_rc = GHash::new(&RTWO.into());
     ghash_rc.update(&[RONE.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(RTWO, &[&RONE])));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(RTWO, &[RONE])));
 }
 
 #[test]
@@ -212,7 +212,7 @@ fn test_ghash_h_lone() {
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[LONE.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[&LONE])));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[LONE])));
 }
 
 #[test]
@@ -220,7 +220,7 @@ fn test_ghash_h_rone() {
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[RONE.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[&RONE])));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[RONE])));
 }
 
 #[test]
@@ -228,7 +228,7 @@ fn test_ghash_h_rtwo() {
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[RTWO.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[&RTWO])));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[RTWO])));
 }
 
 #[test]
@@ -237,7 +237,7 @@ fn test_ghash_h_r_8() {
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[R.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[&R])));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[R])));
 }
 
 // ---
@@ -251,7 +251,7 @@ fn test_ghash_lc_r30() {
     let mut ghash_rc = GHash::new(&LC.into());
     ghash_rc.update(&[R.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(LC, &[&R])));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(LC, &[R])));
 }
 
 #[test]
@@ -260,7 +260,7 @@ fn test_ghash_h_r3() {
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[R.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[&R])));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[R])));
 }
 
 #[test]
@@ -269,7 +269,7 @@ fn test_ghash_h_r4() {
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[R.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[&R])));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[R])));
 }
 
 #[test]
@@ -278,7 +278,7 @@ fn test_ghash_h_r5() {
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[R.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[&R])));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[R])));
 }
 
 #[test]
@@ -287,7 +287,7 @@ fn test_ghash_h_r9() {
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[R.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[&R])));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[R])));
 }
 
 #[test]
@@ -296,7 +296,7 @@ fn test_ghash_h_rc() {
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[R.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[&R])));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[R])));
 }
 
 #[test]
@@ -305,7 +305,7 @@ fn test_ghash_h_r38() {
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[R.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[&R])));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[R])));
 }
 
 #[test]
@@ -313,7 +313,7 @@ fn test_ghash_h_x1() {
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[X_1.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[&X_1])));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[X_1])));
 }
 
 #[test]
@@ -321,7 +321,7 @@ fn test_ghash_h_x2() {
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[X_2.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[&X_2])));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[X_2])));
 }
 
 #[test]
@@ -329,7 +329,7 @@ fn test_ghash_double_block_1() {
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[X_1.into(), X_2.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[&X_1, &X_2])));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[X_1, X_2])));
 }
 
 #[test]
@@ -337,7 +337,7 @@ fn test_ghash_double_block_2() {
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[RONE.into(), RTWO.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[&RONE, &RTWO])));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[RONE, RTWO])));
 }
 
 #[test]
@@ -345,5 +345,5 @@ fn test_ghash_double_block_3() {
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[LONE.into(), LTWO.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[&LONE, &LTWO])));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[LONE, LTWO])));
 }

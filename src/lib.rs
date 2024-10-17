@@ -8,7 +8,7 @@
 
 #[cfg(test)] mod tests;
 
-pub fn ghash(hashkey: [u8; 16], blocks: &[&[u8; 16]]) -> [u8; 16] {
+pub fn ghash(hashkey: [u8; 16], blocks: &[[u8; 16]]) -> [u8; 16] {
     let mut x = [0u8; 16];
 
     for block in blocks {
@@ -51,8 +51,7 @@ pub fn gfmul(a: [u8; 16], b: [u8; 16]) -> [u8; 16] {
 
     // reduce the upper 128 bits back into the field
     // println!("galois_reduce(upper): {:?}", galois_reduce(upper));
-    // parse_u128_as_array(lower ^ galois_reduce(upper)) // todo uncomment
-    parse_u128_as_array(lower)
+    parse_u128_as_array(lower ^ galois_reduce(upper))
 }
 
 /// Compute x^{128} * POLY_n (mod x^{128} + 1 + x + x^2 + x^7)
