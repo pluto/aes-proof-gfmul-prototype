@@ -25,27 +25,33 @@ pub fn ghash(hashkey: [u8; 16], blocks: &[&[u8; 16]]) -> [u8; 16] {
 /// binary vectors, and arithmetic operations are defined modulo the irreducible polynomial:
 /// $x^{128} + x^7 + x^2 + x + 1$.
 pub fn gfmul(a: [u8; 16], b: [u8; 16]) -> [u8; 16] {
+    // maybe problem child: al, br
     let (al, ar) = parse_array_as_pair(a);
     let (bl, br) = parse_array_as_pair(b);
-    println!("al: {:?}, ar: {:?}, bl: {:?}, br: {:?}", al, ar, bl, br);
+    // println!("al: {:?}, ar: {:?}, bl: {:?}, br: {:?}", al, ar, bl, br);
 
     // bits 0..128
     let rr = ar * br;
     // bits 64..192
+    // my problem child:
     let lr = (al * br) ^ (ar * bl);
+    // let lr = (al * br); // only nonzero part
     // bits 128..256
     let ll = al * bl;
-    println!("ll: {:?}, rr: {:?}, lr: {:?}, rl: {:?}", ll, rr, al * br, ar * bl);
+    // println!("ll: {:?}, rr: {:?}, _lr: {:?}, _rl: {:?}, lr: {lr:?}", ll, rr, al * br, ar * bl);
 
     // sieve to upper 128..256 bits and lower 128 bits
-    let (lr_hi, lr_lo) = (lr >> 64, (lr & 2u128.pow(65) - 1) >> 1);
-    println!("lr_hi: {:?}, lr_lo: {:?}", lr_hi, lr_lo);
+    // let (lr_hi, lr_lo) = (lr >> 64, lr); // identical to below for h__, since no upper of lr
+    let (lr_hi, lr_lo) = (lr >> 64, (lr & (2u128.pow(64) - 1)));
+
+    // println!("lr_hi: {:?}, lr_lo: {:?}", lr_hi, lr_lo);
     let (upper, lower) = (ll ^ lr_hi, rr ^ (lr_lo << 64));
-    println!("upper: {:?}, lower: {:?}", upper, lower);
+    // let (upper, lower) = (ll ^ lr_hi, (3 << 126) + rr ^ (lr_lo << 64));
+    // println!("upper: {:?}, lower: {:?}", upper, lower);
 
     // reduce the upper 128 bits back into the field
-    println!("galois_reduce(upper): {:?}", galois_reduce(upper));
-    // parse_u128_as_array(lower ^ galois_reduce(upper))
+    // println!("galois_reduce(upper): {:?}", galois_reduce(upper));
+    // parse_u128_as_array(lower ^ galois_reduce(upper)) // todo uncomment
     parse_u128_as_array(lower)
 }
 
@@ -67,12 +73,12 @@ fn galois_reduce(n: u128) -> u128 {
     // therefore there is no element of degree greater than 126=254-126
     (0..=127).for_each(|i| {
         if n & (1 << i) != 0 {
-            println!("{n} ^ (1 << {i}) = {}", n ^ (1 << i));
-            println!("gal_product_int({i})={}", galois_product_int(i));
+            // println!("{n} ^ (1 << {i}) = {}", n ^ (1 << i));
+            // println!("gal_product_int({i})={}", galois_product_int(i));
             m ^= galois_product_int(i);
         }
     });
-    println!("galois_reduced: {m}");
+    // println!("galois_reduced: {m}");
 
     m
 }

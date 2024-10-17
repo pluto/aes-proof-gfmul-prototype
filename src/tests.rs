@@ -9,16 +9,16 @@ use hex_literal::hex;
 use super::*;
 
 const LONE: [u8; 16] = hex!("80000000000000000000000000000000"); // 1
-const LTWO: [u8; 16] = hex!("40000000000000000000000000000000"); // 2
+const LTWO: [u8; 16] = hex!("40000000000000000000000000000000");
+const LTHREE: [u8; 16] = hex!("c0000000000000000000000000000000");
+const LFOUR: [u8; 16] = hex!("20000000000000000000000000000000");
+const LEIGHT: [u8; 16] = hex!("10000000000000000000000000000000");
+const LC: [u8; 16] = hex!("30000000000000000000000000000000"); // 12
 
 const RONE: [u8; 16] = hex!("00000000000000000000000000000001"); // 1 << 127
 const RTWO: [u8; 16] = hex!("00000000000000000000000000000002"); // 1 << 126
 
-// todo: kill
-// const POLY: [u8; 16] = hex!("00000000000000000000000000000087"); // 135 backwards
-const POLY: [u8; 16] = hex!("e1000000000000000000000000000000"); // 135
-
-const H_: [u8; 16] = hex!("0000000000000000000000000000000b");
+// const POLY: [u8; 16] = hex!("e1000000000000000000000000000000"); // 135
 
 // https://github.com/RustCrypto/universal-hashes/blob/master/ghash/tests/lib.rs//
 const H: [u8; 16] = hex!("25629347589242761d31f826ba4b757b");
@@ -58,14 +58,21 @@ fn test_parse_u8_as_bits() {
 
 #[test]
 fn test_parse() {
-    assert_eq!(parse_array_as_pair(RONE), (1 << 63, 0));
     assert_eq!(parse_array_as_pair(LONE), (0, 1));
-    assert_eq!(parse_array_as_pair(RTWO), (1 << 62, 0));
     assert_eq!(parse_array_as_pair(LTWO), (0, 2));
+    assert_eq!(parse_array_as_pair(LTHREE), (0, 3));
+    assert_eq!(parse_array_as_pair(LFOUR), (0, 4));
+    assert_eq!(parse_array_as_pair(LEIGHT), (0, 8));
+    assert_eq!(parse_array_as_pair(LC), (0, 12));
+
+    assert_eq!(parse_array_as_pair(RONE), (1 << 63, 0));
+    assert_eq!(parse_array_as_pair(RTWO), (1 << 62, 0));
+
     assert_eq!(1, parse_array_as_uint(LONE));
     assert_eq!(2, parse_array_as_uint(LTWO));
     assert_eq!(1 << 127, parse_array_as_uint(RONE));
     assert_eq!(1 << 126, parse_array_as_uint(RTWO));
+
     let (a, b) = parse_array_as_pair(X_1);
     assert_eq!((a << 64) + b, parse_array_as_uint(X_1));
 }
@@ -136,7 +143,6 @@ fn ghash_helper(h: &[u8; 16], block: &[u8; 16]) {
     assert_eq!(result.as_slice(), ghash(H, &[&block]));
 }
 
-// because of generic array, it's hard to write a helper for this function
 #[test]
 fn test_ghash_lsb_lsb() {
     let mut ghash_rc = GHash::new(&LONE.into());
@@ -150,11 +156,11 @@ fn test_ghash_msb_msb() {
     let mut ghash_rc = GHash::new(&RONE.into());
     ghash_rc.update(&[RONE.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(result.as_slice(), ghash(RONE, &[&RONE]));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(RONE, &[&RONE])));
 }
 
 #[test]
-fn test_ghash_two_two() {
+fn test_ghash_ltwo_ltwo() {
     let mut ghash_rc = GHash::new(&LTWO.into());
     ghash_rc.update(&[LTWO.into()]);
     let result = ghash_rc.finalize();
@@ -170,19 +176,11 @@ fn test_ghash_lsb_msb() {
 }
 
 #[test]
-fn test_ghash_lsb_two() {
+fn test_ghash_lsb_ltwo() {
     let mut ghash_rc = GHash::new(&LTWO.into());
     ghash_rc.update(&[LONE.into()]);
     let result = ghash_rc.finalize();
     assert_eq!(result.as_slice(), ghash(LTWO, &[&LONE]));
-}
-
-#[test]
-fn test_ghash_two_msb() {
-    let mut ghash_rc = GHash::new(&LTWO.into());
-    ghash_rc.update(&[RONE.into()]);
-    let result = ghash_rc.finalize();
-    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(LTWO, &[&RONE])));
 }
 
 #[test]
@@ -242,19 +240,22 @@ fn test_ghash_h_r_8() {
     assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H, &[&R])));
 }
 
-/// ---
+// ---
+// --- THE CHASM OF
+// --- GREAT SADNESS
+// ---
+
 #[test]
-fn test_ghash_h__r_300() {
-    const H_: [u8; 16] = hex!("30000000000000000000000000000000");
+fn test_ghash_lc_r30() {
     const R: [u8; 16] = hex!("00000000000000000000000000000030");
-    let mut ghash_rc = GHash::new(&H_.into());
+    let mut ghash_rc = GHash::new(&LC.into());
     ghash_rc.update(&[R.into()]);
     let result = ghash_rc.finalize();
-    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(H_, &[&R])));
+    assert_eq!(hex::encode(result.as_slice()), hex::encode(ghash(LC, &[&R])));
 }
 
 #[test]
-fn test_ghash_h_r_3() {
+fn test_ghash_h_r3() {
     const R: [u8; 16] = hex!("00000000000000000000000000000003");
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[R.into()]);
@@ -263,7 +264,7 @@ fn test_ghash_h_r_3() {
 }
 
 #[test]
-fn test_ghash_h_r_4() {
+fn test_ghash_h_r4() {
     const R: [u8; 16] = hex!("00000000000000000000000000000004");
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[R.into()]);
@@ -272,7 +273,7 @@ fn test_ghash_h_r_4() {
 }
 
 #[test]
-fn test_ghash_h_r_5() {
+fn test_ghash_h_r5() {
     const R: [u8; 16] = hex!("00000000000000000000000000000005");
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[R.into()]);
@@ -281,7 +282,7 @@ fn test_ghash_h_r_5() {
 }
 
 #[test]
-fn test_ghash_h_r_9() {
+fn test_ghash_h_r9() {
     const R: [u8; 16] = hex!("00000000000000000000000000000009");
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[R.into()]);
@@ -290,7 +291,7 @@ fn test_ghash_h_r_9() {
 }
 
 #[test]
-fn test_ghash_h_r_c() {
+fn test_ghash_h_rc() {
     const R: [u8; 16] = hex!("0000000000000000000000000000000c");
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[R.into()]);
@@ -299,7 +300,7 @@ fn test_ghash_h_r_c() {
 }
 
 #[test]
-fn test_ghash_h_r_38() {
+fn test_ghash_h_r38() {
     const R: [u8; 16] = hex!("00000000000000000000000000000038");
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[R.into()]);
@@ -324,7 +325,7 @@ fn test_ghash_h_x2() {
 }
 
 #[test]
-fn test_ghash_two_block_1() {
+fn test_ghash_double_block_1() {
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[X_1.into(), X_2.into()]);
     let result = ghash_rc.finalize();
@@ -332,7 +333,7 @@ fn test_ghash_two_block_1() {
 }
 
 #[test]
-fn test_ghash_two_block_2() {
+fn test_ghash_double_block_2() {
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[RONE.into(), RTWO.into()]);
     let result = ghash_rc.finalize();
@@ -340,7 +341,7 @@ fn test_ghash_two_block_2() {
 }
 
 #[test]
-fn test_ghash_two_block_3() {
+fn test_ghash_double_block_3() {
     let mut ghash_rc = GHash::new(&H.into());
     ghash_rc.update(&[LONE.into(), LTWO.into()]);
     let result = ghash_rc.finalize();
