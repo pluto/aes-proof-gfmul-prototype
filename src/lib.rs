@@ -21,11 +21,19 @@ pub fn ghash(hashkey: [u8; 16], blocks: &[[u8; 16]]) -> [u8; 16] {
     x
 }
 
+pub fn gfmul(a: [u8; 16], b: [u8; 16]) -> [u8; 16] {
+    let a = parse_array_as_uint(a);
+    // let b = parse_array_as_bits(b);
+    todo!()
+}
+
 /// Multiplication over the finite field $\text{GF}(2^{128})$. Elements in this field are 128-bit
 /// binary vectors, and arithmetic operations are defined modulo the irreducible polynomial:
 /// $x^{128} + x^7 + x^2 + x + 1$.
-pub fn gfmul(a: [u8; 16], b: [u8; 16]) -> [u8; 16] {
-    // maybe problem child: al, br
+///
+/// sadmode_gfmul sadly makes incorrect assumptions about the feasibility of performing galois field
+/// arithmetic within the integers, and is irretrievably incorrect.
+pub fn _sadmode_gfmul(a: [u8; 16], b: [u8; 16]) -> [u8; 16] {
     let (al, ar) = parse_array_as_pair(a);
     let (bl, br) = parse_array_as_pair(b);
     // println!("al: {:?}, ar: {:?}, bl: {:?}, br: {:?}", al, ar, bl, br);
@@ -33,20 +41,16 @@ pub fn gfmul(a: [u8; 16], b: [u8; 16]) -> [u8; 16] {
     // bits 0..128
     let rr = ar * br;
     // bits 64..192
-    // my problem child:
     let lr = (al * br) ^ (ar * bl);
-    // let lr = (al * br); // only nonzero part
     // bits 128..256
     let ll = al * bl;
     // println!("ll: {:?}, rr: {:?}, _lr: {:?}, _rl: {:?}, lr: {lr:?}", ll, rr, al * br, ar * bl);
 
     // sieve to upper 128..256 bits and lower 128 bits
-    // let (lr_hi, lr_lo) = (lr >> 64, lr); // identical to below for h__, since no upper of lr
     let (lr_hi, lr_lo) = (lr >> 64, (lr & (2u128.pow(64) - 1)));
 
     // println!("lr_hi: {:?}, lr_lo: {:?}", lr_hi, lr_lo);
     let (upper, lower) = (ll ^ lr_hi, rr ^ (lr_lo << 64));
-    // let (upper, lower) = (ll ^ lr_hi, (3 << 126) + rr ^ (lr_lo << 64));
     // println!("upper: {:?}, lower: {:?}", upper, lower);
 
     // reduce the upper 128 bits back into the field
@@ -140,8 +144,11 @@ fn parse_array_as_uint(arr: [u8; 16]) -> u128 {
     (0..16).fold(0, |acc, i| acc | (arr[i] as u128) << (i * 8))
 }
 
+// /// parse ghash-convention byte array to ghash-convention bits
+// fn parse_array_as_bits(arr: [u8; 16]) -> [bool; 128] {core::array::from_fn(|i| (b & (}
+
 /// interpret 128; i.e. 0x80 as [1000 0000]
-fn parse_u8_as_bits(b: u8) -> Vec<bool> { (0..8).map(|i| b >> i & 1 == 1).collect() }
+fn parse_u8_as_bits(b: u8) -> [bool; 8] { core::array::from_fn(|i| (b & (1 << i)) != 0) }
 
 /// send bits in byte to reverse order; e.g. send (192=128+64) -> 3
 fn reverse_byte(b: u8) -> u8 { (0..8).fold(0, |acc, i| acc | ((b >> (7 - i)) & 1) << i) }
