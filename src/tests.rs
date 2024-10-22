@@ -1,4 +1,4 @@
-use std::io::Read;
+// use std::io::Read;
 
 use ghash::{
     universal_hash::{KeyInit, UniversalHash},
@@ -57,12 +57,19 @@ fn test_parse_u128_as_array() {
 }
 
 #[test]
-fn test_parse_u8_as_bits() {
+fn test_parse_as_bits() {
     assert_eq!(parse_u8_as_bits(0), [false, false, false, false, false, false, false, false]);
     assert_eq!(parse_u8_as_bits(1), [true, false, false, false, false, false, false, false]);
     assert_eq!(parse_u8_as_bits(2), [false, true, false, false, false, false, false, false]);
     assert_eq!(parse_u8_as_bits(3), [true, true, false, false, false, false, false, false]);
     assert_eq!(parse_u8_as_bits(4), [false, false, true, false, false, false, false, false]);
+
+    let mut arr = [false; 128];
+    arr[0] = true;
+    assert_eq!(parse_array_as_bits(LONE), arr);
+    let mut arr = [false; 128];
+    arr[127] = true;
+    assert_eq!(parse_array_as_bits(RONE), arr);
 }
 
 #[test]

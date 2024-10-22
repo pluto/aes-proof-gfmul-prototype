@@ -1,4 +1,4 @@
-#![allow(unused_imports)]
+// #![allow(unused_imports)]
 #![allow(unused_variables)]
 #![allow(dead_code)]
 #![allow(unreachable_code)]
@@ -22,8 +22,29 @@ pub fn ghash(hashkey: [u8; 16], blocks: &[[u8; 16]]) -> [u8; 16] {
 }
 
 pub fn gfmul(a: [u8; 16], b: [u8; 16]) -> [u8; 16] {
-    let a = parse_array_as_uint(a);
-    // let b = parse_array_as_bits(b);
+    let a_uint = parse_array_as_uint(a);
+    let b_arr = parse_array_as_bits(b);
+
+    // obtain a 128 bit array of each element in b_arr times a_uint
+    //
+    let products: Vec<u128> =
+        b_arr.iter().enumerate().map(|(i, bit)| if *bit { a_uint << i } else { 0 }).collect();
+
+    // accumulate the xor of each 128-bit element into the pieces of upper_128 and lower_128
+    // a * b_arr[0]   => bits 0..128
+    // a * b_arr[1]   => bits 1..129
+    // ...
+    // a * b_arr[127] => bits 127..255
+    //
+    // where:
+    // lower128 contains bits 0..128
+    // upper128 contains bits 128..256
+    let (mut upper128, mut lower128) = (0, 0);
+    for product in products {
+        lower128 ^= product & ((1 << 128) - 1);
+        upper128 ^= product >> 128;
+    }
+
     todo!()
 }
 
@@ -81,7 +102,16 @@ fn galois_reduce(n: u128) -> u128 {
             m ^= galois_product_int(i);
         }
     });
+
+    // let reduced: i32 = (1..10).reduce(|acc, e| acc + e).unwrap();
+    let m = (0..=127)
+        .map(|i| if n & (1 << i) != 0 { galois_product_int(i) } else { 0 })
+        // .reduce(|acc, e| acc ^ e)
+    // .unwrap();
+        .fold(0, |acc, e| acc ^ e);
     // println!("galois_reduced: {m}");
+
+    // pythonic:
 
     m
 }
@@ -144,8 +174,14 @@ fn parse_array_as_uint(arr: [u8; 16]) -> u128 {
     (0..16).fold(0, |acc, i| acc | (arr[i] as u128) << (i * 8))
 }
 
-// /// parse ghash-convention byte array to ghash-convention bits
-// fn parse_array_as_bits(arr: [u8; 16]) -> [bool; 128] {core::array::from_fn(|i| (b & (}
+/// parse ghash-convention byte array to ghash-convention bits
+fn parse_array_as_bits(arr: [u8; 16]) -> [bool; 128] {
+    (0..16).fold([false; 128], |mut acc, i| {
+        let bits = parse_u8_as_bits(reverse_byte(arr[i]));
+        (0..8).for_each(|j| acc[i * 8 + j] = bits[j]);
+        acc
+    })
+}
 
 /// interpret 128; i.e. 0x80 as [1000 0000]
 fn parse_u8_as_bits(b: u8) -> [bool; 8] { core::array::from_fn(|i| (b & (1 << i)) != 0) }
